@@ -53,7 +53,6 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ match, onRestart, onGo
         <div className="inline-block px-4 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest">比賽總結</div>
       </div>
 
-      {/* Podium */}
       <div className="flex items-end justify-center space-x-2 pt-8">
         {winners[1] && (
           <div className="flex flex-col items-center">
@@ -74,7 +73,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ match, onRestart, onGo
               <span className="text-xl font-black dark:text-white">{winners[0].name.charAt(0)}</span>
               <Crown className="w-5 h-5 text-amber-500 absolute -top-4" />
             </div>
-            <div className="w-24 h-28 bg-indigo-600 text-white rounded-t-3xl flex flex-col items-center justify-center p-2 shadow-2xl">
+            <div className="w-24 h-28 bg-[#0AFFD6] text-slate-900 rounded-t-3xl flex flex-col items-center justify-center p-2 shadow-2xl">
                 <span className="text-[10px] font-black uppercase mb-1 opacity-80">Winner</span>
                 <span className="text-[11px] font-bold text-center truncate w-full">{winners[0].name}</span>
                 <span className="text-2xl font-black">{winners[0].total}</span>
@@ -96,7 +95,6 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ match, onRestart, onGo
         )}
       </div>
 
-      {/* Rankings Grid */}
       <div className="space-y-4">
         <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 flex items-center px-1">
             <Users className="w-4 h-4 mr-2" /> 隊伍表現與成員
@@ -105,7 +103,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ match, onRestart, onGo
           {teamStats.map((team, idx) => (
             <div key={team.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
               <div className="flex items-center space-x-3 overflow-hidden">
-                <span className={`text-xs font-black w-5 text-center ${idx < 3 ? "text-indigo-600" : "text-slate-300"}`}>{idx + 1}</span>
+                <span className={`text-xs font-black w-5 text-center ${idx < 3 ? "text-slate-900 dark:text-[#0AFFD6]" : "text-slate-300"}`}>{idx + 1}</span>
                 <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: team.color }}></div>
                 <div className="truncate">
                   <span className="font-bold text-sm dark:text-white block truncate">{team.name}</span>
@@ -120,13 +118,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ match, onRestart, onGo
         </div>
       </div>
 
-      {/* Chart Section */}
       <div className="space-y-4">
         <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 flex items-center px-1">
             <Trophy className="w-4 h-4 mr-2" /> 積分成長曲線
         </h3>
-        <div className="bg-white dark:bg-slate-900 p-4 pt-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-[300px] min-w-0" style={{ minHeight: '300px' }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <div className="bg-white dark:bg-slate-900 p-4 pt-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-[320px] w-full min-w-0" style={{ minHeight: '320px', position: 'relative' }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
             <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#1e293b" : "#f1f5f9"} />
               <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} stroke={isDark ? "#475569" : "#94a3b8"} />
@@ -152,12 +149,11 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ match, onRestart, onGo
         </div>
       </div>
 
-      {/* Action Buttons - Restart removed, only Go Home left */}
       <div className="fixed bottom-0 left-0 right-0 z-[100] p-6 bg-gradient-to-t from-white dark:from-slate-950 via-white/90 dark:via-slate-950/90 to-transparent flex justify-center">
         <div className="w-full max-w-lg">
           <button 
             onClick={onGoHome} 
-            className="w-full p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-all"
+            className="w-full p-5 bg-[#0AFFD6] hover:brightness-110 text-slate-900 rounded-3xl font-black shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-all"
           >
             <Home className="w-6 h-6" />
             <span className="text-lg">返回首頁</span>

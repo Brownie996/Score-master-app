@@ -18,5 +18,5 @@ export const PRESET_TEAMS = [
   { name: "我愛三部", members: "新凱、嘉慶、柏霖" },
   { name: "Gold", members: "冠維、志傑、志雄" },
   { name: "我的私房錢", members: "先旻、啟原、尉凱" },
-  { name: "Team", members: "智強、信弘、振華" },
+  { name: "Team Taiwan", members: "智強、信弘、振華" },
 ];

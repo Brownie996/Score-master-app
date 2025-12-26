@@ -71,13 +71,11 @@ const App: React.FC = () => {
   };
 
   const resetMatch = () => {
-    // Confirmation before clearing
     const confirmReset = window.confirm('確定要結束當前比賽並清空所有紀錄嗎？此動作無法復原。');
     if (confirmReset) {
       localStorage.removeItem(STORAGE_KEY);
       setMatch(null);
       setView('HOME');
-      // Ensure the UI refreshes state properly
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -86,13 +84,12 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col relative transition-colors duration-300">
       <GeometricBackground />
       
-      {/* Clean Header */}
       <header className="px-6 py-4 flex justify-between items-center z-[100] sticky top-0 glass-morphism shadow-sm">
         <div 
           className="flex items-center space-x-2 cursor-pointer group"
           onClick={() => setView('HOME')}
         >
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black transform transition-transform shadow-lg shadow-indigo-500/20">S</div>
+          <div className="w-8 h-8 bg-[#0AFFD6] rounded-lg flex items-center justify-center text-slate-900 font-black transform transition-transform shadow-lg shadow-[#0AFFD6]/20">S</div>
           <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
             ScoreMaster
           </h1>
@@ -102,11 +99,10 @@ const App: React.FC = () => {
           className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-90"
           aria-label="Toggle dark mode"
         >
-          {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
+          {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-[#0AFFD6]" />}
         </button>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col p-4 sm:p-6 max-w-lg md:max-w-4xl mx-auto w-full z-10">
         {view === 'HOME' && (
           <HomeView 
@@ -140,7 +136,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer removed per request */}
       <div className="pb-10"></div>
     </div>
   );

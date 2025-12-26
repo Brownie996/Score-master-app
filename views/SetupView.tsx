@@ -11,7 +11,7 @@ interface SetupViewProps {
 
 export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
   const [step, setStep] = useState(1);
-  const [title, setTitle] = useState('團體積分賽');
+  const [title, setTitle] = useState('三部團體積分賽');
   const [teamCount, setTeamCount] = useState(8);
   const [roundCount, setRoundCount] = useState(3);
   
@@ -104,7 +104,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
                 type="text" 
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-transparent focus:border-indigo-500 outline-none shadow-sm transition-all dark:text-white"
+                className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-transparent focus:border-[#0AFFD6] outline-none shadow-sm transition-all dark:text-white"
               />
             </div>
 
@@ -142,7 +142,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
                       placeholder="隊伍名稱"
                       value={team.name}
                       onChange={e => handleTeamChange(team.id, 'name', e.target.value)}
-                      className="flex-1 bg-transparent border-b border-slate-100 dark:border-slate-700 focus:border-indigo-500 outline-none font-bold py-1 dark:text-white"
+                      className="flex-1 bg-transparent border-b border-slate-100 dark:border-slate-700 focus:border-[#0AFFD6] outline-none font-bold py-1 dark:text-white"
                     />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -177,7 +177,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {rounds.map((round, idx) => (
                 <div key={round.id} className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm">
-                   <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center rounded-xl text-indigo-600 dark:text-indigo-400 font-black">
+                   <div className="w-10 h-10 bg-[#0AFFD6]/10 flex items-center justify-center rounded-xl text-slate-900 dark:text-[#0AFFD6] font-black">
                       {idx + 1}
                    </div>
                    <input 
@@ -196,7 +196,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 dark:from-slate-900 to-transparent flex justify-center z-50">
         <button 
           onClick={step === 3 ? handleStartMatch : handleNext}
-          className="w-full max-w-lg p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black shadow-2xl flex items-center justify-center space-x-2 transition-all active:scale-95"
+          className="w-full max-w-lg p-5 bg-[#0AFFD6] hover:brightness-110 text-slate-900 rounded-3xl font-black shadow-2xl flex items-center justify-center space-x-2 transition-all active:scale-95"
         >
           <span>{step === 3 ? "立即開始比賽" : "下一步"}</span>
           <Check className="w-5 h-5" />

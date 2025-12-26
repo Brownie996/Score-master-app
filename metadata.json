@@ -1,0 +1,5 @@
+{
+  "name": "Vibrant ScoreMaster",
+  "description": "A high-energy, mobile-optimized competition score tracker with real-time updates, geometric aesthetics, and persistent local storage.",
+  "requestFramePermissions": []
+}

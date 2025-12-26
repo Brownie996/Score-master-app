@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { Competition, Team, Round } from '../types';
-import { DEFAULT_COLORS } from '../constants';
-// Fixed: Removed UserGroupIcon which does not exist in lucide-react and other unused icons.
-import { ArrowLeft, Check, Trophy } from 'lucide-react';
+import { DEFAULT_COLORS, PRESET_TEAMS } from '../constants';
+import { ArrowLeft, Check, Trophy, Users } from 'lucide-react';
 
 interface SetupViewProps {
   onCancel: () => void;
@@ -12,16 +11,19 @@ interface SetupViewProps {
 
 export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
   const [step, setStep] = useState(1);
-  const [title, setTitle] = useState('我的超級比賽');
-  const [teamCount, setTeamCount] = useState(2);
+  const [title, setTitle] = useState('團體積分賽');
+  const [teamCount, setTeamCount] = useState(8);
   const [roundCount, setRoundCount] = useState(3);
+  
   const [teams, setTeams] = useState<Team[]>(() => {
-    return Array.from({ length: 2 }, (_, i) => ({
+    return Array.from({ length: 8 }, (_, i) => ({
       id: `team-${Date.now()}-${i}`,
-      name: `隊伍 ${i + 1}`,
+      name: PRESET_TEAMS[i]?.name || `隊伍 ${i + 1}`,
+      members: PRESET_TEAMS[i]?.members || "",
       color: DEFAULT_COLORS[i % DEFAULT_COLORS.length]
     }));
   });
+
   const [rounds, setRounds] = useState<Round[]>(() => {
     return Array.from({ length: 3 }, (_, i) => ({
       id: `round-${Date.now()}-${i}`,
@@ -33,16 +35,8 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
   const handleNext = () => setStep(step + 1);
   const handleBack = () => step > 1 ? setStep(step - 1) : onCancel();
 
-  const handleTeamNameChange = (id: string, name: string) => {
-    setTeams(prev => prev.map(t => t.id === id ? { ...t, name } : t));
-  };
-
-  const handleTeamColorChange = (id: string, color: string) => {
-    setTeams(prev => prev.map(t => t.id === id ? { ...t, color } : t));
-  };
-
-  const handleRoundNameChange = (id: string, name: string) => {
-    setRounds(prev => prev.map(r => r.id === id ? { ...r, name } : r));
+  const handleTeamChange = (id: string, field: keyof Team, value: string) => {
+    setTeams(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
   const updateTeamCount = (val: number) => {
@@ -51,7 +45,8 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
     if (nextVal > teams.length) {
       const added = Array.from({ length: nextVal - teams.length }, (_, i) => ({
         id: `team-${Date.now()}-${teams.length + i}`,
-        name: `隊伍 ${teams.length + i + 1}`,
+        name: PRESET_TEAMS[teams.length + i]?.name || `隊伍 ${teams.length + i + 1}`,
+        members: PRESET_TEAMS[teams.length + i]?.members || "",
         color: DEFAULT_COLORS[(teams.length + i) % DEFAULT_COLORS.length]
       }));
       setTeams([...teams, ...added]);
@@ -92,7 +87,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
   };
 
   return (
-    <div className="flex flex-col h-full animate-in slide-in-from-right duration-300">
+    <div className="flex flex-col h-full animate-in slide-in-from-right duration-300 max-w-2xl mx-auto w-full">
       <div className="flex items-center mb-6">
         <button onClick={handleBack} className="p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
           <ArrowLeft className="w-6 h-6" />
@@ -100,7 +95,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
         <h2 className="ml-2 text-xl font-bold">創建比賽 {step}/3</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-24 space-y-6">
+      <div className="flex-1 overflow-y-auto pb-32 space-y-6 px-1">
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-300">
             <div className="space-y-2">
@@ -109,26 +104,25 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
                 type="text" 
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-transparent focus:border-indigo-500 outline-none shadow-sm transition-all"
-                placeholder="輸入比賽名稱..."
+                className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-transparent focus:border-indigo-500 outline-none shadow-sm transition-all dark:text-white"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-500 flex items-center">隊伍數</label>
-                <div className="flex items-center bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm">
-                  <button onClick={() => updateTeamCount(teamCount - 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">-</button>
-                  <span className="flex-1 text-center font-bold text-lg">{teamCount}</span>
-                  <button onClick={() => updateTeamCount(teamCount + 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">+</button>
+                <label className="text-sm font-bold text-slate-500">隊伍數量</label>
+                <div className="flex items-center bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm border border-slate-100 dark:border-slate-700">
+                  <button onClick={() => updateTeamCount(teamCount - 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 font-bold">-</button>
+                  <span className="flex-1 text-center font-bold text-lg dark:text-white">{teamCount}</span>
+                  <button onClick={() => updateTeamCount(teamCount + 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 font-bold">+</button>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-500 flex items-center">局/場次數</label>
-                <div className="flex items-center bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm">
-                  <button onClick={() => updateRoundCount(roundCount - 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">-</button>
-                  <span className="flex-1 text-center font-bold text-lg">{roundCount}</span>
-                  <button onClick={() => updateRoundCount(roundCount + 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">+</button>
+                <label className="text-sm font-bold text-slate-500">比賽局數</label>
+                <div className="flex items-center bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm border border-slate-100 dark:border-slate-700">
+                  <button onClick={() => updateRoundCount(roundCount - 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 font-bold">-</button>
+                  <span className="flex-1 text-center font-bold text-lg dark:text-white">{roundCount}</span>
+                  <button onClick={() => updateRoundCount(roundCount + 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700 font-bold">+</button>
                 </div>
               </div>
             </div>
@@ -137,60 +131,74 @@ export const SetupView: React.FC<SetupViewProps> = ({ onCancel, onStart }) => {
 
         {step === 2 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom duration-300">
-            <label className="text-sm font-bold text-slate-500">隊伍設定</label>
-            {teams.map((team, idx) => (
-              <div key={team.id} className="flex flex-col space-y-3 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border-l-8" style={{ borderLeftColor: team.color }}>
-                <div className="flex items-center space-x-3">
-                  <span className="text-xs font-black text-slate-300">#{idx + 1}</span>
-                  <input 
-                    type="text" 
-                    value={team.name}
-                    onChange={e => handleTeamNameChange(team.id, e.target.value)}
-                    className="flex-1 bg-transparent border-b border-slate-200 dark:border-slate-700 focus:border-indigo-500 outline-none font-bold py-1"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {DEFAULT_COLORS.map(c => (
-                    <button 
-                      key={c}
-                      onClick={() => handleTeamColorChange(team.id, c)}
-                      className={`w-8 h-8 rounded-full border-2 transition-transform active:scale-90 ${team.color === c ? "border-slate-400 scale-110" : "border-transparent"}`}
-                      style={{ backgroundColor: c }}
+            <label className="text-sm font-bold text-slate-500">隊伍與名單設定</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {teams.map((team, idx) => (
+                <div key={team.id} className="flex flex-col space-y-3 bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border-l-8 transition-all" style={{ borderLeftColor: team.color }}>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-black text-slate-300">#{idx + 1}</span>
+                    <input 
+                      type="text" 
+                      placeholder="隊伍名稱"
+                      value={team.name}
+                      onChange={e => handleTeamChange(team.id, 'name', e.target.value)}
+                      className="flex-1 bg-transparent border-b border-slate-100 dark:border-slate-700 focus:border-indigo-500 outline-none font-bold py-1 dark:text-white"
                     />
-                  ))}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-3 h-3 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="隊員名單 (例如：王小明, 李小華)"
+                      value={team.members}
+                      onChange={e => handleTeamChange(team.id, 'members', e.target.value)}
+                      className="flex-1 bg-transparent text-xs outline-none dark:text-slate-300"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {DEFAULT_COLORS.map(c => (
+                      <button 
+                        key={c}
+                        onClick={() => handleTeamChange(team.id, 'color', c)}
+                        className={`w-6 h-6 rounded-full border-2 transition-all ${team.color === c ? "border-slate-400 scale-110 shadow-md" : "border-transparent opacity-60 hover:opacity-100"}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom duration-300">
-            <label className="text-sm font-bold text-slate-500">場次名稱</label>
-            {rounds.map((round, idx) => (
-              <div key={round.id} className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm">
-                 <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center rounded-xl text-indigo-600 font-bold">
-                    {idx + 1}
-                 </div>
-                 <input 
-                  type="text" 
-                  value={round.name}
-                  onChange={e => handleRoundNameChange(round.id, e.target.value)}
-                  className="flex-1 bg-transparent outline-none font-bold"
-                />
-              </div>
-            ))}
+            <label className="text-sm font-bold text-slate-500">自訂場次名稱</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {rounds.map((round, idx) => (
+                <div key={round.id} className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm">
+                   <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center rounded-xl text-indigo-600 dark:text-indigo-400 font-black">
+                      {idx + 1}
+                   </div>
+                   <input 
+                    type="text" 
+                    value={round.name}
+                    onChange={e => setRounds(prev => prev.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
+                    className="flex-1 bg-transparent outline-none font-bold dark:text-white"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Persistent Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 dark:from-slate-900 to-transparent flex justify-center z-20">
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 dark:from-slate-900 to-transparent flex justify-center z-50">
         <button 
           onClick={step === 3 ? handleStartMatch : handleNext}
-          className="w-full max-w-lg p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-xl flex items-center justify-center space-x-2 transition-all active:scale-95"
+          className="w-full max-w-lg p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl font-black shadow-2xl flex items-center justify-center space-x-2 transition-all active:scale-95"
         >
-          <span>{step === 3 ? "開始比賽" : "下一步"}</span>
+          <span>{step === 3 ? "立即開始比賽" : "下一步"}</span>
           <Check className="w-5 h-5" />
         </button>
       </div>

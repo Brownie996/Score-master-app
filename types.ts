@@ -2,6 +2,7 @@
 export interface Team {
   id: string;
   name: string;
+  members: string; // 逗號分隔或字串
   color: string;
 }
 

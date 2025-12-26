@@ -14,34 +14,35 @@ const App: React.FC = () => {
   const [view, setView] = useState<View>('HOME');
   const [match, setMatch] = useState<Competition | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Initial check for dark mode
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' || 
-             (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const saved = localStorage.getItem('theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
   });
 
-  // Load match from storage
+  // Load saved match on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setMatch(JSON.parse(saved));
+        const parsedMatch = JSON.parse(saved);
+        setMatch(parsedMatch);
       } catch (e) {
         console.error("Failed to parse saved match", e);
       }
     }
   }, []);
 
-  // Sync match to storage
+  // Persist match whenever it updates
   useEffect(() => {
     if (match) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(match));
     }
   }, [match]);
 
-  // Dark mode toggle effect
+  // Handle Theme
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -70,34 +71,43 @@ const App: React.FC = () => {
   };
 
   const resetMatch = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setMatch(null);
-    setView('HOME');
+    // Confirmation before clearing
+    const confirmReset = window.confirm('確定要結束當前比賽並清空所有紀錄嗎？此動作無法復原。');
+    if (confirmReset) {
+      localStorage.removeItem(STORAGE_KEY);
+      setMatch(null);
+      setView('HOME');
+      // Ensure the UI refreshes state properly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative dark:bg-slate-900 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col relative transition-colors duration-300">
       <GeometricBackground />
       
-      {/* Header */}
-      <header className="px-6 py-4 flex justify-between items-center z-50 sticky top-0 bg-white/10 dark:bg-slate-900/10 backdrop-blur-md border-b border-white/10 dark:border-white/5">
-        <h1 
-          className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent cursor-pointer"
+      {/* Clean Header */}
+      <header className="px-6 py-4 flex justify-between items-center z-[100] sticky top-0 glass-morphism shadow-sm">
+        <div 
+          className="flex items-center space-x-2 cursor-pointer group"
           onClick={() => setView('HOME')}
         >
-          ScoreMaster
-        </h1>
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black transform transition-transform shadow-lg shadow-indigo-500/20">S</div>
+          <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+            ScoreMaster
+          </h1>
+        </div>
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className="p-2 rounded-full bg-white/40 dark:bg-slate-800/60 hover:bg-white/60 dark:hover:bg-slate-700/80 transition-all active:scale-90 shadow-sm"
+          className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-90"
           aria-label="Toggle dark mode"
         >
-          {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
+          {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
         </button>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col p-4 max-w-lg mx-auto w-full z-10">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col p-4 sm:p-6 max-w-lg md:max-w-4xl mx-auto w-full z-10">
         {view === 'HOME' && (
           <HomeView 
             hasActiveMatch={!!match} 
@@ -130,10 +140,8 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer Branding */}
-      <footer className="py-6 text-center text-slate-400 dark:text-slate-500 text-xs font-medium">
-        &copy; 2024 VIBRANT SCORE MASTER
-      </footer>
+      {/* Footer removed per request */}
+      <div className="pb-10"></div>
     </div>
   );
 };

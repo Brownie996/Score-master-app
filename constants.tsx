@@ -1,18 +1,22 @@
 
 export const DEFAULT_COLORS = [
-  '#FF5F6D', // Coral
-  '#FFC371', // Orange
-  '#4facfe', // Blue
-  '#00f2fe', // Cyan
-  '#a18cd1', // Purple
-  '#fbc2eb', // Pink
-  '#84fab0', // Green
-  '#ff9a9e', // Soft Red
+  '#FF5F6D', // 紅
+  '#FFC371', // 橙
+  '#4facfe', // 藍
+  '#00f2fe', // 青
+  '#a18cd1', // 紫
+  '#fbc2eb', // 粉
+  '#84fab0', // 綠
+  '#ff9a9e', // 柔紅
 ];
 
-export const GEOMETRIC_SHAPES = [
-  "M0 0 L100 0 L100 100 Z",
-  "M50 0 L100 100 L0 100 Z",
-  "M0 50 A50 50 0 1 1 100 50 A50 50 0 1 1 0 50",
-  "M0 0 H100 V100 H0 Z"
+export const PRESET_TEAMS = [
+  { name: "紅單超人", members: "奕謙、庭宇、子昂" },
+  { name: "我想放假", members: "日彥、見達、睿紳" },
+  { name: "青菜啦", members: "智仁、思劬、明錡" },
+  { name: "零用錢Get", members: "星同、羿凱、易霖" },
+  { name: "我愛三部", members: "新凱、嘉慶、柏霖" },
+  { name: "Gold", members: "冠維、志傑、志雄" },
+  { name: "我的私房錢", members: "先旻、啟原、尉凱" },
+  { name: "Team", members: "智強、信弘、振華" },
 ];

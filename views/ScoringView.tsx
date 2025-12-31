@@ -1,7 +1,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Competition } from '../types';
-import { ChevronLeft, ChevronRight, Plus, Minus, Trophy, Flag, Shuffle, ChevronUp, ChevronDown, Play, Pause, RotateCcw, Timer as TimerIcon, Bell } from 'lucide-react';
+import { Competition, Team } from '../types';
+import { ChevronLeft, ChevronRight, Plus, Minus, Trophy, Flag, Shuffle, ChevronUp, ChevronDown, Play, Pause, RotateCcw, Timer as TimerIcon, Gamepad2 } from 'lucide-react';
+import { MiniGameOverlay } from './MiniGameOverlay';
 
 interface ScoringViewProps {
   match: Competition;
@@ -12,13 +13,42 @@ interface ScoringViewProps {
 export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFinish }) => {
   const [currentRoundIdx, setCurrentRoundIdx] = useState(0);
   const [displayOrder, setDisplayOrder] = useState<string[]>(match.teams.map(t => t.id));
+  const [isMiniGameOpen, setIsMiniGameOpen] = useState(false);
 
-  // Timer State
+  // --- 主計時器狀態 ---
   const [timeLeft, setTimeLeft] = useState(180);
   const [isActive, setIsActive] = useState(false);
   const timerRef = useRef<number | null>(null);
 
+  // --- 小遊戲狀態 (從當前場次載入) ---
   const currentRound = match.rounds[currentRoundIdx];
+  
+  const [miniScores, setMiniScores] = useState<Record<string, number>>({});
+  const [miniTimeLeft, setMiniTimeLeft] = useState(60);
+  const [isMiniActive, setIsMiniActive] = useState(false);
+
+  // 當切換場次時，從比賽資料中同步該場次的小遊戲狀態
+  useEffect(() => {
+    const roundData = match.rounds[currentRoundIdx];
+    const initialMiniScores: Record<string, number> = {};
+    match.teams.forEach(t => {
+      initialMiniScores[t.id] = roundData.miniGameScores?.[t.id] || 0;
+    });
+    setMiniScores(initialMiniScores);
+    setMiniTimeLeft(roundData.miniGameTimeLeft ?? 60);
+    setIsMiniActive(false); // 切換場次時暫停小遊戲計時
+  }, [currentRoundIdx, match.teams.length]); // 僅在切換 round 時觸發
+
+  // 當小遊戲分數或時間變動時，更新回主 match 狀態以供持久化
+  const syncMiniDataToMatch = (newScores: Record<string, number>, newTime: number) => {
+    const updatedRounds = [...match.rounds];
+    updatedRounds[currentRoundIdx] = {
+      ...updatedRounds[currentRoundIdx],
+      miniGameScores: newScores,
+      miniGameTimeLeft: newTime
+    };
+    onUpdate({ ...match, rounds: updatedRounds });
+  };
 
   const totalScores = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -35,6 +65,7 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
     return [...match.teams].sort((a, b) => totalScores[b.id] - totalScores[a.id]);
   }, [match.teams, totalScores]);
 
+  // 主計時器 Effect
   useEffect(() => {
     if (isActive && timeLeft > 0) {
       timerRef.current = window.setInterval(() => {
@@ -46,9 +77,7 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isActive, timeLeft]);
 
   const formatTime = (seconds: number) => {
@@ -78,6 +107,34 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
     onUpdate({ ...match, rounds: updatedRounds });
   };
 
+  // 小遊戲結算邏輯
+  const handleMiniGameFinish = (results: Record<string, number>) => {
+    const sortedTeamIds = Object.keys(results).sort((a, b) => results[b] - results[a]);
+    const updatedRounds = [...match.rounds];
+    const updatedScores = { ...updatedRounds[currentRoundIdx].scores };
+    
+    sortedTeamIds.forEach((teamId, index) => {
+      const bonus = Math.max(0, 10 - index);
+      updatedScores[teamId] = (updatedScores[teamId] || 0) + bonus;
+    });
+
+    updatedRounds[currentRoundIdx] = { 
+      ...updatedRounds[currentRoundIdx], 
+      scores: updatedScores 
+    };
+    onUpdate({ ...match, rounds: updatedRounds });
+    
+    if (confirm("結算成功！積分已加至當前場次。是否要重置本局小遊戲分數與時間？")) {
+      const resetScores: Record<string, number> = {};
+      match.teams.forEach(t => resetScores[t.id] = 0);
+      setMiniScores(resetScores);
+      setMiniTimeLeft(60);
+      setIsMiniActive(false);
+      syncMiniDataToMatch(resetScores, 60);
+    }
+    setIsMiniGameOpen(false);
+  };
+
   const shuffleOrder = () => {
     const shuffled = [...displayOrder].sort(() => Math.random() - 0.5);
     setDisplayOrder(shuffled);
@@ -86,11 +143,8 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
   const moveOrder = (id: string, dir: 'up' | 'down') => {
     const idx = displayOrder.indexOf(id);
     const newOrder = [...displayOrder];
-    if (dir === 'up' && idx > 0) {
-      [newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]];
-    } else if (dir === 'down' && idx < newOrder.length - 1) {
-      [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
-    }
+    if (dir === 'up' && idx > 0) [newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]];
+    else if (dir === 'down' && idx < newOrder.length - 1) [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
     setDisplayOrder(newOrder);
   };
 
@@ -100,41 +154,23 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
   return (
     <div className="flex flex-col h-full space-y-4 max-w-4xl mx-auto w-full relative">
       
-      {/* 凍結置頂的計時器 - 改為黃色 #FFD60A */}
+      {/* 主計時器 - 改為 top-[64px] 以避開 Header (Header 高度約 64px) */}
       <div className={`fixed top-[64px] left-0 right-0 z-50 px-4 py-3 shadow-2xl transition-all duration-300 ${
-        isTimeCritical 
-        ? "bg-rose-600 text-white animate-pulse" 
-        : timeLeft === 0 
-          ? "bg-slate-900 text-slate-400" 
-          : "bg-[#FFD60A] text-slate-900"
+        isTimeCritical ? "bg-rose-600 text-white animate-pulse" : timeLeft === 0 ? "bg-slate-900 text-slate-400" : "bg-[#FFD60A] text-slate-900"
       }`}>
         <div className="max-w-lg mx-auto flex flex-col space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <TimerIcon className={`w-5 h-5 ${isTimeCritical ? "animate-bounce" : ""}`} />
-              <span className="text-4xl font-black font-mono tracking-tighter tabular-nums">
-                {formatTime(timeLeft)}
-              </span>
+              <span className="text-4xl font-black font-mono tracking-tighter tabular-nums">{formatTime(timeLeft)}</span>
             </div>
-
             <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => setIsActive(!isActive)}
-                className={`p-3 rounded-2xl transition-all active:scale-95 shadow-lg ${
-                  isActive ? "bg-white text-slate-900" : "bg-black text-white"
-                }`}
-              >
+              <button onClick={() => setIsActive(!isActive)} className={`p-3 rounded-2xl transition-all active:scale-95 shadow-lg ${isActive ? "bg-white text-slate-900" : "bg-black text-white"}`}>
                 {isActive ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
               </button>
-              <button 
-                onClick={() => { setIsActive(false); setTimeLeft(180); }}
-                className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all active:scale-90"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </button>
+              <button onClick={() => { setIsActive(false); setTimeLeft(180); }} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all active:scale-90"><RotateCcw className="w-5 h-5" /></button>
             </div>
           </div>
-
           <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest bg-black/5 rounded-xl p-1">
             <div className="flex items-center space-x-1">
               <span className="opacity-60 ml-2 text-slate-800">Min</span>
@@ -151,16 +187,13 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
         </div>
       </div>
 
-      <div className="h-[100px]"></div>
+      <div className="h-[120px]"></div>
 
+      {/* 總積分實況 */}
       <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest flex items-center">
-            <Trophy className="w-3 h-3 mr-1" /> 總積分實況
-          </span>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-bold text-slate-900 bg-[#0AFFD6] px-2 py-0.5 rounded-full">REAL-TIME</span>
-          </div>
+          <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest flex items-center"><Trophy className="w-3 h-3 mr-1" /> 總積分實況</span>
+          <span className="text-[10px] font-bold text-slate-900 bg-[#0AFFD6] px-2 py-0.5 rounded-full">REAL-TIME</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {sortedTotals.map((team) => (
@@ -172,34 +205,24 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
         </div>
       </div>
 
+      {/* 場次導航 */}
       <div className="flex items-center justify-between px-1">
-        <button 
-          onClick={() => setCurrentRoundIdx(Math.max(0, currentRoundIdx - 1))}
-          disabled={currentRoundIdx === 0}
-          className={`p-3 rounded-2xl transition-all ${currentRoundIdx === 0 ? "opacity-20 cursor-not-allowed" : "bg-white dark:bg-slate-800 shadow-md active:scale-90"}`}
-        >
-          <ChevronLeft className="w-6 h-6 dark:text-white" />
-        </button>
-        
+        <button onClick={() => setCurrentRoundIdx(Math.max(0, currentRoundIdx - 1))} disabled={currentRoundIdx === 0} className={`p-3 rounded-2xl transition-all ${currentRoundIdx === 0 ? "opacity-20 cursor-not-allowed" : "bg-white dark:bg-slate-800 shadow-md active:scale-90"}`}><ChevronLeft className="w-6 h-6 dark:text-white" /></button>
         <div className="text-center flex flex-col items-center">
           <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">{currentRound.name}</h2>
           <div className="flex items-center space-x-2 mt-1">
              <button onClick={shuffleOrder} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-[#0AFFD6]/20 active:scale-90 transition-all flex items-center border border-transparent hover:border-[#0AFFD6]/40">
-                <Shuffle className="w-3 h-3 mr-1" />
-                <span className="text-[10px] font-black uppercase tracking-tighter">隨機排列</span>
+                <Shuffle className="w-3 h-3 mr-1" /><span className="text-[10px] font-black uppercase tracking-tighter">隨機排列</span>
+             </button>
+             <button onClick={() => setIsMiniGameOpen(true)} className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400 hover:bg-purple-200 active:scale-90 transition-all flex items-center border border-transparent hover:border-purple-300">
+                <Gamepad2 className="w-3 h-3 mr-1" /><span className="text-[10px] font-black uppercase tracking-tighter">小遊戲</span>
              </button>
           </div>
         </div>
-
-        <button 
-          onClick={() => setCurrentRoundIdx(Math.min(match.rounds.length - 1, currentRoundIdx + 1))}
-          disabled={isLastRound}
-          className={`p-3 rounded-2xl transition-all ${isLastRound ? "opacity-20 cursor-not-allowed" : "bg-white dark:bg-slate-800 shadow-md active:scale-90"}`}
-        >
-          <ChevronRight className="w-6 h-6 dark:text-white" />
-        </button>
+        <button onClick={() => setCurrentRoundIdx(Math.min(match.rounds.length - 1, currentRoundIdx + 1))} disabled={isLastRound} className={`p-3 rounded-2xl transition-all ${isLastRound ? "opacity-20 cursor-not-allowed" : "bg-white dark:bg-slate-800 shadow-md active:scale-90"}`}><ChevronRight className="w-6 h-6 dark:text-white" /></button>
       </div>
 
+      {/* 隊伍計分卡 */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto pb-40 px-1 pt-2">
         {displayOrder.map((teamId) => {
           const team = match.teams.find(t => t.id === teamId)!;
@@ -214,39 +237,18 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
                       <div className="w-3 h-6 rounded-full mx-auto" style={{ backgroundColor: team.color }}></div>
                       <button onClick={() => moveOrder(team.id, 'down')} className="p-1 text-slate-300 hover:text-[#0AFFD6]"><ChevronDown className="w-4 h-4" /></button>
                     </div>
-                    <div>
-                      <span className="text-lg font-black dark:text-white block">{team.name}</span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate max-w-[150px] font-bold uppercase tracking-wider">{team.members}</span>
-                    </div>
+                    <div><span className="text-lg font-black dark:text-white block">{team.name}</span><span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate max-w-[150px] font-bold uppercase tracking-wider">{team.members}</span></div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-widest">Score</span>
-                    <input 
-                      type="number"
-                      pattern="\d*"
-                      value={currentRound.scores[team.id] || 0}
-                      onChange={(e) => handleScoreInput(team.id, e.target.value)}
-                      className="w-20 text-right font-black text-3xl bg-transparent outline-none focus:text-emerald-500 transition-colors dark:text-white"
-                    />
-                  </div>
+                  <div className="text-right"><span className="text-[10px] font-black text-slate-400 block uppercase tracking-widest">Score</span><input type="number" pattern="\d*" value={currentRound.scores[team.id] || 0} onChange={(e) => handleScoreInput(team.id, e.target.value)} className="w-20 text-right font-black text-3xl bg-transparent outline-none focus:text-emerald-500 transition-colors dark:text-white" /></div>
                 </div>
-
                 <div className="flex items-center justify-between space-x-2">
                   <div className="flex-1 grid grid-cols-2 gap-2">
-                    <button onClick={() => updateScore(team.id, -1)} className="p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl flex items-center justify-center transition-all active:scale-90 dark:text-white border border-slate-100 dark:border-slate-700">
-                      <Minus className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => updateScore(team.id, -5)} className="p-4 bg-white dark:bg-slate-900 text-xs font-black rounded-2xl flex items-center justify-center transition-all active:scale-90 text-slate-400 border border-slate-100 dark:border-slate-800">
-                      -5
-                    </button>
+                    <button onClick={() => updateScore(team.id, -1)} className="p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl flex items-center justify-center transition-all active:scale-90 dark:text-white border border-slate-100 dark:border-slate-700"><Minus className="w-5 h-5" /></button>
+                    <button onClick={() => updateScore(team.id, -5)} className="p-4 bg-white dark:bg-slate-900 text-xs font-black rounded-2xl flex items-center justify-center transition-all active:scale-90 text-slate-400 border border-slate-100 dark:border-slate-800">-5</button>
                   </div>
                   <div className="flex-1 grid grid-cols-2 gap-2">
-                    <button onClick={() => updateScore(team.id, 5)} className="p-4 bg-[#0AFFD6]/10 text-slate-800 dark:text-[#0AFFD6] text-xs font-black rounded-2xl flex items-center justify-center transition-all active:scale-90 border border-[#0AFFD6]/20">
-                      +5
-                    </button>
-                    <button onClick={() => updateScore(team.id, 1)} className="p-4 bg-[#0AFFD6] hover:brightness-110 text-slate-900 rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-[#0AFFD6]/20">
-                      <Plus className="w-5 h-5" />
-                    </button>
+                    <button onClick={() => updateScore(team.id, 5)} className="p-4 bg-[#0AFFD6]/10 text-slate-800 dark:text-[#0AFFD6] text-xs font-black rounded-2xl flex items-center justify-center transition-all active:scale-90 border border-[#0AFFD6]/20">+5</button>
+                    <button onClick={() => updateScore(team.id, 1)} className="p-4 bg-[#0AFFD6] hover:brightness-110 text-slate-900 rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-[#0AFFD6]/20"><Plus className="w-5 h-5" /></button>
                   </div>
                 </div>
               </div>
@@ -257,14 +259,31 @@ export const ScoringView: React.FC<ScoringViewProps> = ({ match, onUpdate, onFin
 
       {isLastRound && (
         <div className="fixed bottom-0 left-0 right-0 p-6 flex justify-center z-50 pointer-events-none bg-gradient-to-t from-white dark:from-slate-950 via-white/80 dark:via-slate-950/80 to-transparent">
-          <button 
-            onClick={onFinish}
-            className="w-full max-w-lg p-5 bg-[#0AFFD6] hover:brightness-110 text-slate-900 rounded-[2rem] font-black shadow-2xl flex items-center justify-center space-x-2 transition-all active:scale-95 pointer-events-auto group"
-          >
-            <Flag className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-            <span className="text-xl uppercase tracking-tight">結束比賽 & 查看結果</span>
-          </button>
+          <button onClick={onFinish} className="w-full max-w-lg p-5 bg-[#0AFFD6] hover:brightness-110 text-slate-900 rounded-[2rem] font-black shadow-2xl flex items-center justify-center space-x-2 transition-all active:scale-95 pointer-events-auto group"><Flag className="w-6 h-6 group-hover:rotate-12 transition-transform" /><span className="text-xl uppercase tracking-tight">結束比賽 & 查看結果</span></button>
         </div>
+      )}
+
+      {/* 小遊戲浮層 */}
+      {isMiniGameOpen && (
+        <MiniGameOverlay 
+          teams={match.teams} 
+          miniScores={miniScores}
+          setMiniScores={(updater) => {
+            const next = typeof updater === 'function' ? updater(miniScores) : updater;
+            setMiniScores(next);
+            syncMiniDataToMatch(next, miniTimeLeft);
+          }}
+          miniTimeLeft={miniTimeLeft}
+          setMiniTimeLeft={(updater) => {
+            const next = typeof updater === 'function' ? updater(miniTimeLeft) : updater;
+            setMiniTimeLeft(next);
+            syncMiniDataToMatch(miniScores, next);
+          }}
+          isMiniActive={isMiniActive}
+          setIsMiniActive={setIsMiniActive}
+          onFinish={handleMiniGameFinish} 
+          onClose={() => setIsMiniGameOpen(false)}
+        />
       )}
     </div>
   );

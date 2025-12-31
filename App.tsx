@@ -84,7 +84,8 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col relative transition-colors duration-300">
       <GeometricBackground />
       
-      <header className="px-6 py-4 flex justify-between items-center z-[100] sticky top-0 glass-morphism shadow-sm">
+      {/* 降低 z-index 以免遮擋 Timer (Timer 將設為 z-50+) */}
+      <header className="px-6 py-4 flex justify-between items-center z-30 sticky top-0 glass-morphism shadow-sm">
         <div 
           className="flex items-center space-x-2 cursor-pointer group"
           onClick={() => setView('HOME')}

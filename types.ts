@@ -10,6 +10,8 @@ export interface Round {
   id: string;
   name: string;
   scores: Record<string, number>; // teamId -> score
+  miniGameScores?: Record<string, number>; // 每局獨立的小遊戲分數
+  miniGameTimeLeft?: number; // 每局獨立的小遊戲計時器
 }
 
 export interface Competition {

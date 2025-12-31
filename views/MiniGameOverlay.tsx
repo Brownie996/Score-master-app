@@ -61,7 +61,7 @@ export const MiniGameOverlay: React.FC<MiniGameOverlayProps> = ({
   return (
     <div className="fixed inset-0 z-[150] flex flex-col bg-purple-950 text-white animate-in fade-in slide-in-from-bottom duration-300">
       
-      {/* 1. 全寬計時器 - 修正為 top-[64px] 避開 Header */}
+      {/* 1. 全寬計時器 - 位於 Header (64px) 之下 */}
       <div className={`fixed top-[64px] left-0 right-0 z-[160] px-4 py-3 shadow-2xl transition-all duration-300 ${
         isTimeCritical ? "bg-rose-600 text-white animate-pulse" : miniTimeLeft === 0 ? "bg-slate-900 text-slate-400" : "bg-[#FFD60A] text-slate-900"
       }`}>
@@ -98,11 +98,11 @@ export const MiniGameOverlay: React.FC<MiniGameOverlayProps> = ({
       </div>
 
       {/* 2. 可滾動的主內容區 */}
-      <div className="flex-1 overflow-y-auto mt-[164px] pb-40">
+      <div className="flex-1 overflow-y-auto mt-[175px] pb-40">
         
-        {/* 榮譽排行榜 (Podium) - 放在滾動區域內 */}
+        {/* 榮譽排行榜 (Podium) - 增加內容高度確保隊名不被遮擋 */}
         <div className="px-4 py-8 bg-purple-900/30 backdrop-blur-sm border-b border-purple-800/50 shadow-[inset_0_-4px_20px_rgba(168,85,247,0.1)]">
-          <div className="flex items-end justify-center space-x-3 h-44">
+          <div className="flex items-end justify-center space-x-3 h-52">
             {/* 銀牌 - 2nd */}
             {sortedTeams[1] && (
               <div className="flex flex-col items-center animate-in slide-in-from-bottom duration-500 delay-100">
@@ -112,8 +112,8 @@ export const MiniGameOverlay: React.FC<MiniGameOverlayProps> = ({
                    </div>
                    <Medal className="w-5 h-5 text-slate-400 absolute -top-1 -right-1" />
                 </div>
-                <div className="bg-slate-300 w-20 h-16 mt-3 rounded-t-2xl flex flex-col items-center justify-center p-2 shadow-lg">
-                  <span className="text-[10px] font-black text-slate-950 truncate w-full text-center leading-tight">{sortedTeams[1].name}</span>
+                <div className="bg-slate-300 w-20 h-20 mt-3 rounded-t-2xl flex flex-col items-center justify-center p-2 shadow-lg">
+                  <span className="text-[11px] font-black text-slate-950 truncate w-full text-center leading-tight mb-1">{sortedTeams[1].name}</span>
                   <span className="text-xl font-black text-slate-900">{miniScores[sortedTeams[1].id] || 0}</span>
                 </div>
               </div>
@@ -127,13 +127,13 @@ export const MiniGameOverlay: React.FC<MiniGameOverlayProps> = ({
                    </div>
                    <Crown className="w-10 h-10 text-amber-500 absolute -top-8 left-1/2 -translate-x-1/2 drop-shadow-lg" />
                 </div>
-                <div className="bg-[#0AFFD6] w-28 h-24 rounded-t-3xl flex flex-col items-center justify-center p-3 shadow-[0_0_20px_rgba(10,255,214,0.3)] border-x-4 border-t-4 border-white/20">
+                <div className="bg-[#0AFFD6] w-28 h-28 rounded-t-3xl flex flex-col items-center justify-center p-3 shadow-[0_0_20px_rgba(10,255,214,0.3)] border-x-4 border-t-4 border-white/20">
                   <span className="text-[11px] font-black text-slate-900 truncate w-full text-center uppercase tracking-tight mb-1">{sortedTeams[0].name}</span>
                   <span className="text-3xl font-black text-slate-950">{miniScores[sortedTeams[0].id] || 0}</span>
                 </div>
               </div>
             )}
-            {/* 銅牌 - 3rd */}
+            {/* 銅牌 - 3rd - 增加高度 (h-16) 以防止名稱遮擋 */}
             {sortedTeams[2] && (
               <div className="flex flex-col items-center animate-in slide-in-from-bottom duration-500 delay-200">
                 <div className="relative">
@@ -142,8 +142,8 @@ export const MiniGameOverlay: React.FC<MiniGameOverlayProps> = ({
                    </div>
                    <Medal className="w-5 h-5 text-amber-700 absolute -top-1 -right-1" />
                 </div>
-                <div className="bg-amber-900 w-20 h-12 mt-3 rounded-t-2xl flex flex-col items-center justify-center p-2 shadow-lg">
-                  <span className="text-[10px] font-black text-amber-100 truncate w-full text-center leading-tight">{sortedTeams[2].name}</span>
+                <div className="bg-amber-800 w-20 h-16 mt-3 rounded-t-2xl flex flex-col items-center justify-center p-2 shadow-lg">
+                  <span className="text-[11px] font-black text-amber-100 truncate w-full text-center leading-tight mb-1">{sortedTeams[2].name}</span>
                   <span className="text-xl font-black text-amber-50">{miniScores[sortedTeams[2].id] || 0}</span>
                 </div>
               </div>
@@ -183,21 +183,23 @@ export const MiniGameOverlay: React.FC<MiniGameOverlayProps> = ({
             const rank = sortedTeams.findIndex(t => t.id === team.id) + 1;
             return (
               <div key={team.id} className="flex items-center justify-between p-4 bg-purple-900/40 rounded-3xl border border-purple-800/50 shadow-sm hover:bg-purple-900/60 transition-colors">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
+                <div className="flex items-center space-x-4 max-w-[60%]">
+                  <div className="relative flex-shrink-0">
                     <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: team.color }}></div>
                     <div className="absolute -left-1 -top-1 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-sm">
                        <span className="text-[8px] font-black text-purple-900">{rank}</span>
                     </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-black block">{team.name}</span>
-                    <span className="text-[10px] text-purple-400 font-bold uppercase">{team.members.split('、')[0] || "隊員"} 等成員</span>
+                  <div className="overflow-hidden">
+                    <span className="text-sm font-black block truncate">{team.name}</span>
+                    <span className="text-[10px] text-purple-400 font-bold uppercase block truncate">
+                      {team.members || "無人員紀錄"}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 flex-shrink-0">
                   <button onClick={() => updateScore(team.id, -1)} className="w-10 h-10 flex items-center justify-center bg-purple-800 hover:bg-purple-700 rounded-xl transition-all active:scale-90"><Minus className="w-5 h-5" /></button>
-                  <div className="w-12 text-center"><span className="text-2xl font-black text-[#0AFFD6] tabular-nums">{miniScores[team.id] || 0}</span></div>
+                  <div className="w-10 text-center"><span className="text-2xl font-black text-[#0AFFD6] tabular-nums">{miniScores[team.id] || 0}</span></div>
                   <button onClick={() => updateScore(team.id, 1)} className="w-12 h-12 flex items-center justify-center bg-[#0AFFD6] text-slate-900 rounded-2xl shadow-lg shadow-[#0AFFD6]/10 transition-all active:scale-90"><Plus className="w-6 h-6" /></button>
                 </div>
               </div>
